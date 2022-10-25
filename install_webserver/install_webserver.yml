@@ -1,0 +1,5 @@
+- hosts: web
+  tasks:
+    - name: Webserver installation
+      become: true
+      
