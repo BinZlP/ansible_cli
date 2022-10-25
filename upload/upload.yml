@@ -1,0 +1,10 @@
+- hosts: "{{ target_host }}"
+  vars:
+    - src_file: /home/ubuntu/test.txt
+    - dest_path: /home/ubuntu
+
+  tasks:
+    - name: Copy flie(s) to target hosts
+      copy:
+        src: "{{ src_file }}"
+        dest: "{{ dest_path }}"
