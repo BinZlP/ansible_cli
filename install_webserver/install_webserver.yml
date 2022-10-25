@@ -1,5 +1,34 @@
 - hosts: web
+  remote_user: ubuntu
+
   tasks:
-    - name: Webserver installation
+    - name: Node.js installation
+      tags: [ install, nodejs ]
       become: true
-      
+      apt:
+        name:
+          - nodejs
+          - npm
+        state: latest
+        update_cache: yes
+
+    - name: Check Node.js installed successfully
+      tags: [ check, nodejs ]
+      shell: node -v; npm -v
+
+    - name: Express.js installation
+      tags: [ install, express ]
+      become: true
+      community.general.npm:
+        name: express
+        state: latest
+        global: true
+
+    - name: Express generator installation
+      tags: [ install, express ]
+      become: true
+      community.general.npm:
+        name: express-generator
+        state: latest
+        global: true
+
