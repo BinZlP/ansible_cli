@@ -1,0 +1,30 @@
+#!/usr/bin/python3
+
+import sys
+from Common import *
+import AnsibleDriver
+
+def process_command(command, args):
+  print(args)
+  match command:
+    case "list":
+      print("list case")
+    case "deploy":
+      print("deploy")
+    case "change-type":
+      print("change-type")
+    case "register":
+      print("register")
+    case "deregister":
+      print("deregister")
+    case "upload":
+      AnsibleDriver.upload_to_hosts(args)
+    case default:
+      print("Default")
+
+command = sys.argv[1]
+args = sys.argv[2:]
+
+
+process_command(command, args)
+
