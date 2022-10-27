@@ -1,0 +1,22 @@
+- hosts: localhost
+  connection: local
+
+  tasks:
+  - name: Gather info. of ec2 hosts
+    ec2_instance_info:
+      region: us-west-2
+    register: result
+
+#  - name: Print info.
+#    debug:
+#      var: "{{ item }}"
+#    loop: "{{ result.instances }}"
+
+  - name: Save output
+    copy:
+      content: "{{ result.instances }}"
+      dest: /tmp/ec2_instance_info.log
+
+#    - name: ping hosts
+#      ping:
+
