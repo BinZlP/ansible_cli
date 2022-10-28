@@ -1,0 +1,20 @@
+- hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Gather info
+      ec2_instance_info:
+        region: us-west-2
+        filters:
+#          "tag:env": "{{ tag_value }}"
+          '{ "tag:{{ tag_key }}": "{{ tag_value }}" }'
+      register: result
+
+#    - name: print info
+#      debug:
+#        msg: "{{ result.instances }}"
+
+    - name: Print ipv4
+      debug:
+        msg: "{{ item.public_ip_address }}"
+      loop: "{{ result.instances }}"
