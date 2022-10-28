@@ -11,7 +11,7 @@ def process_command(command, args):
     case "deploy":
       print("deploy")
     case "change-type":
-      print("change-type")
+      AnsibleDriver.change_instance_type(args)
     case "register":
       print("register")
     case "deregister":

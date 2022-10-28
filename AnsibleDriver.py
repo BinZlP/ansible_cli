@@ -9,8 +9,10 @@ LIST_TMP_FILE_PATH = "/tmp/ec2_instance_info.log"
 
 PLAYBOOK_PATH_DICTIONARY = {
   'list' : "list_instances/print_info.yml",
+  'change-type' : "change_type/change_type.yml",
   'upload' : "upload/upload.yml"
 }
+
 
 def list_instances(args):
   if len(args) < 1:
@@ -22,7 +24,7 @@ def list_instances(args):
   tag_value = args[0].split(':')[1]
 
   target_playbook = os.getcwd() + '/' + PLAYBOOK_PATH_DICTIONARY['list']
-  command = "%s %s" % (ASB_PLAY_BIN, target_playbook)
+  command = "%s %s -e \"tag_key=%s tag_value=%s\"" % (ASB_PLAY_BIN, target_playbook, tag_key, tag_value)
   ret_val = os.system(command)
 
   if ret_val > 0:
@@ -35,24 +37,42 @@ def list_instances(args):
   with open(LIST_TMP_FILE_PATH) as ec2_info_file:
     ec2_info_list = json.load(ec2_info_file)
     for ec2_info in ec2_info_list:
-      if tag_key in ec2_info['tags'] and ec2_info['tags'][tag_key] == tag_value:
-        inst_info_row = []
+#      if tag_key in ec2_info['tags'] and ec2_info['tags'][tag_key] == tag_value:
+      inst_info_row = []
 
-        inst_info_row.append(ec2_info['tags']['Name'])
-        inst_info_row.append(ec2_info['private_ip_address'])
-        inst_info_row.append(ec2_info['public_ip_address'])
-        inst_info_row.append(ec2_info['state']['name'])
-        inst_info_row.append(json.dumps(dict(sorted(ec2_info['tags'].items()))))
+      inst_info_row.append(ec2_info['tags']['Name'])
+      inst_info_row.append(ec2_info['private_ip_address'])
+      inst_info_row.append(ec2_info['public_ip_address'])
+      inst_info_row.append(ec2_info['state']['name'])
+      inst_info_row.append(json.dumps(dict(sorted(ec2_info['tags'].items()))))
 
-        tab.add_row(inst_info_row)
+      tab.add_row(inst_info_row)
 
   print(tab)
-  return ret_val
+  return -ret_val
 
 
 
-def 
+def change_instance_type(args):
+  if len(args) < 2:
+    print("Error: missing parameters")
+    print("Parameter list: [tag:value] [instance type]")
+    return -ECODE_MISSING_PARAM
 
+  tag_key = args[0].split(':')[0]
+  tag_value = args[0].split(':')[1]
+  instance_type = args[1]
+
+  target_host_group = "_%s_%s" % (tag_key, tag_value)
+
+  target_playbook = os.getcwd() + '/' + PLAYBOOK_PATH_DICTIONARY['change-type']
+  extra_var_args = (target_host_group, instance_type, tag_key, tag_value)
+  extra_variables = "target_host=%s target_type=%s tag_key=%s tag_value=%s" % extra_var_args
+  command = "%s %s -e \"%s\"" % (ASB_PLAY_BIN, target_playbook, extra_variables)
+
+  ret_val = os.system(command)
+
+  return -ret_val
 
 
 def upload_to_hosts(args):
@@ -82,5 +102,5 @@ def upload_to_hosts(args):
   #print(command)
   ret_val = os.system(command)
 
-  return ret_val
+  return -ret_val
 
