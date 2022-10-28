@@ -5,6 +5,8 @@
   - name: Gather info. of ec2 hosts
     ec2_instance_info:
       region: us-west-2
+      filters:
+        '{ "tag:{{ tag_key }}": "{{ tag_value }}" }'
     register: result
 
 #  - name: Print info.
