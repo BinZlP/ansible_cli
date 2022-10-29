@@ -4,22 +4,25 @@ import sys
 from Common import *
 import AnsibleDriver
 
+COMMAND_DICT = {
+  "list": AnsibleDriver.list_instances,
+  "deploy": AnsibleDriver.deploy_webserver,
+  "change-type": AnsibleDriver.change_instance_type,
+  "register": AnsibleDriver.register_to_load_balancer,
+  "deregister": AnsibleDriver.deregister_to_load_balancer,
+  "upload": AnsibleDriver.upload_to_hosts
+}
+
+
 def process_command(command, args):
-  match command:
-    case "list":
-      AnsibleDriver.list_instances(args)
-    case "deploy":
-      AnsibleDriver.deploy_webserver(args)
-    case "change-type":
-      AnsibleDriver.change_instance_type(args)
-    case "register":
-      print("register")
-    case "deregister":
-      print("deregister")
-    case "upload":
-      AnsibleDriver.upload_to_hosts(args)
-    case default:
-      print("Default")
+  if command in COMMAND_DICT:
+    COMMAND_DICT[command](args)
+  else:
+    print("Invalid command: %s" % command)
+    print("Supported command list: ")
+    for k in COMMAND_DICT.keys():
+      print("  "+k)
+
 
 if len(sys.argv) < 2:
   print("Usage: %s [command] {args...}" % sys.argv[0])
