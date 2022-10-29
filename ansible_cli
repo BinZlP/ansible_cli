@@ -9,7 +9,7 @@ COMMAND_DICT = {
   "deploy": AnsibleDriver.deploy_webserver,
   "change-type": AnsibleDriver.change_instance_type,
   "register": AnsibleDriver.register_to_load_balancer,
-  "deregister": AnsibleDriver.deregister_to_load_balancer,
+  "deregister": AnsibleDriver.deregister_from_load_balancer,
   "upload": AnsibleDriver.upload_to_hosts
 }
 
