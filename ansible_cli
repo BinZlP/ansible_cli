@@ -9,7 +9,7 @@ def process_command(command, args):
     case "list":
       AnsibleDriver.list_instances(args)
     case "deploy":
-      print("deploy")
+      AnsibleDriver.deploy_webserver(args)
     case "change-type":
       AnsibleDriver.change_instance_type(args)
     case "register":

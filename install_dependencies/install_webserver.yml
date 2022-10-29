@@ -32,3 +32,11 @@
         state: latest
         global: true
 
+    - name: Forever module installation
+      tags: [ install ]
+      become: true
+      community.general.npm:
+        name: forever
+        state: latest
+        global: true
+

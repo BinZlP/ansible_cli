@@ -9,6 +9,7 @@ LIST_TMP_FILE_PATH = "/tmp/ec2_instance_info.log"
 
 PLAYBOOK_PATH_DICTIONARY = {
   'list' : "list_instances/print_info.yml",
+  'deploy' : "deploy_webserver/deploy.yml",
   'change-type' : "change_type/change_type.yml",
   'upload' : "upload/upload.yml"
 }
@@ -51,6 +52,25 @@ def list_instances(args):
   print(tab)
   return -ret_val
 
+def deploy_webserver(args):
+  if len(args) < 2:
+    print("Error: missing parameters")
+    print("Parameter list: [tag:value] [appName]")
+    return -ECODE_MISSING_PARAM
+
+  tag_key = args[0].split(':')[0]
+  tag_value = args[0].split(':')[1]
+  app_name = args[1]
+
+  target_host_group = "_%s_%s" % (tag_key, tag_value)
+
+  target_playbook = os.getcwd() + '/' + PLAYBOOK_PATH_DICTIONARY['deploy']
+
+  command = "%s %s -e \"target_host=%s app_name=%s\"" % (ASB_PLAY_BIN, target_playbook, target_host_group, app_name)
+
+  ret_val = os.system(command)
+
+  return -ret_val
 
 
 def change_instance_type(args):

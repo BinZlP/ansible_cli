@@ -1,0 +1,32 @@
+- hosts: "{{ target_host }}"
+
+  vars:
+    - git_base: "https://github.com/BinZlP"
+    - git_repo: "{{ git_base }}/{{ app_name }}.git"
+    - base_dir: "/home/ubuntu"
+    - webserver_dir: "{{ base_dir }}/{{ app_name }}"
+    - bin_path: "bin/www"
+
+  tasks:
+    - name: Check the prev. ver. web server exists on target hosts
+      stat:
+        path: "{{ webserver_dir }}"
+      register: stat_result
+
+    - name: Clone repo. if prev. ver. not exists
+      git:
+        repo: "{{ git_repo }}"
+        dest: "{{ webserver_dir }}"
+        clone: yes
+      when: not stat_result.stat.exists
+
+    - name: Update web server source
+      git:
+        repo: "{{ git_repo }}"
+        dest: "{{ webserver_dir }}"
+        update: yes
+      register: update_result
+
+    - name: Restarting web server on hosts
+      shell: forever stop "{{ webserver_dir }}"/"{{ bin_path }}"; forever start "{{ webserver_dir }}"/"{{ bin_path }}"
+      when: update_result.changed
