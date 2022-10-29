@@ -3,34 +3,37 @@ import json
 from prettytable import PrettyTable
 
 from Common import *
+import ArgumentProcessor
 
-ASB_PLAY_BIN = "ansible-playbook"
 LIST_TMP_FILE_PATH = "/tmp/ec2_instance_info.log"
 
-PLAYBOOK_PATH_DICTIONARY = {
-  'list' : "list_instances/print_info.yml",
-  'deploy' : "deploy_webserver/deploy.yml",
-  'change-type' : "change_type/change_type.yml",
-  'register' : "register_to_lb/registration.yml",
-  'deregister' : "register_to_lb/deregistration.yml",
-  'upload' : "upload/upload.yml"
-}
+
+def error_missing_parameter(arg_list):
+  print("Error: missing parameters")
+  param_list_str = "Parameter list: "
+  for a in arg_list:
+    param_list_str += "[%s]" % a
+  print(param_list_str)
+  return -ECODE_MISSING_PARAM
+
 
 
 def list_instances(args):
   if len(args) < 1:
-    print("Error: missing parameters")
-    print("Parameter list: [tag:value]")
-    return -ECODE_MISSING_PARAM
+    return error_missing_parameter(["tag:value"])
 
-  tag_key = args[0].split(':')[0]
-  tag_value = args[0].split(':')[1]
+  tag_key, tag_value = ArgumentProcessor.get_key_and_value(args[0])
+  
+  extra_vars = dict()
+  extra_vars["tag_key"] = tag_key
+  extra_vars["tag_value"] = tag_value
 
-  target_playbook = os.getcwd() + '/' + PLAYBOOK_PATH_DICTIONARY['list']
-  command = "%s %s -e \"tag_key=%s tag_value=%s\"" % (ASB_PLAY_BIN, target_playbook, tag_key, tag_value)
+  command = ArgumentProcessor.generate_command('list', extra_vars)
+  
   ret_val = os.system(command)
 
   if ret_val > 0:
+    print("Failed to run command")
     return -ret_val
 
   tab_header = ['Instance Name', 'Private IP', 'Public IP', 'Status', 'Tags']
@@ -54,19 +57,13 @@ def list_instances(args):
 
 def deploy_webserver(args):
   if len(args) < 2:
-    print("Error: missing parameters")
-    print("Parameter list: [tag:value] [appName]")
-    return -ECODE_MISSING_PARAM
+    return error_missing_parameter(["tag:value", "appName"])
 
-  tag_key = args[0].split(':')[0]
-  tag_value = args[0].split(':')[1]
-  app_name = args[1]
+  extra_vars = dict()
+  extra_vars["target_host"] = ArgumentProcessor.get_host_group_name(args[0])
+  extra_vars["app_name"] = args[1]
 
-  target_host_group = "_%s_%s" % (tag_key, tag_value)
-
-  target_playbook = os.getcwd() + '/' + PLAYBOOK_PATH_DICTIONARY['deploy']
-
-  command = "%s %s -e \"target_host=%s app_name=%s\"" % (ASB_PLAY_BIN, target_playbook, target_host_group, app_name)
+  command = ArgumentProcessor.generate_command('deploy', extra_vars)
 
   ret_val = os.system(command)
 
@@ -75,20 +72,16 @@ def deploy_webserver(args):
 
 def change_instance_type(args):
   if len(args) < 2:
-    print("Error: missing parameters")
-    print("Parameter list: [tag:value] [instance type]")
-    return -ECODE_MISSING_PARAM
+    return error_missing_parameter(["tag:value", "instance type"])
 
-  tag_key = args[0].split(':')[0]
-  tag_value = args[0].split(':')[1]
-  instance_type = args[1]
+  tag_key, tag_value = ArgumentProcessor.get_key_and_value(args[0])
 
-  target_host_group = "_%s_%s" % (tag_key, tag_value)
+  extra_vars = dict()
+  extra_vars["tag_key"] = tag_key
+  extra_vars["tag_value"] = tag_value
+  extra_vars["target_type"] = args[1]
 
-  target_playbook = os.getcwd() + '/' + PLAYBOOK_PATH_DICTIONARY['change-type']
-  extra_var_args = (target_host_group, instance_type, tag_key, tag_value)
-  extra_variables = "target_host=%s target_type=%s tag_key=%s tag_value=%s" % extra_var_args
-  command = "%s %s -e \"%s\"" % (ASB_PLAY_BIN, target_playbook, extra_variables)
+  command = ArgumentProcessor.generate_command('change-type', extra_vars)
 
   ret_val = os.system(command)
 
@@ -97,17 +90,16 @@ def change_instance_type(args):
 
 def register_to_load_balancer(args):
   if len(args) < 2:
-    print("Error: missing parameters")
-    print("Parameter list: [tag:value] [target group name]")
-    return -ECODE_MISSING_PARAM
-  
-  tag_key = args[0].split(':')[0]
-  tag_value = args[0].split(':')[1]
-  target_group_name = args[1]
+    return error_missing_parameter(["tag:value", "target group name"])
 
-  target_playbook = os.getcwd() + '/' + PLAYBOOK_PATH_DICTIONARY['register']
+  tag_key, tag_value = ArgumentProcessor.get_key_and_value(args[0])
 
-  command = "%s %s -e \"tag_key=%s tag_value=%s target_group_name=%s\"" % (ASB_PLAY_BIN, target_playbook, tag_key, tag_value, target_group_name)
+  extra_vars = dict()
+  extra_vars["tag_key"] = tag_key
+  extra_vars["tag_value"] = tag_value
+  extra_vars["target_group_name"] = args[1]
+
+  command = ArgumentProcessor.generate_command('register', extra_vars)
 
   ret_val = os.system(command)
 
@@ -116,17 +108,16 @@ def register_to_load_balancer(args):
 
 def deregister_from_load_balancer(args):
   if len(args) < 2:
-    print("Error: missing parameters")
-    print("Parameter list: [tag:value] [target group name]")
-    return -ECODE_MISSING_PARAM
+    return error_missing_parameter(["tag:value", "target group name"])
 
-  tag_key = args[0].split(':')[0]
-  tag_value = args[0].split(':')[1]
-  target_group_name = args[1]
+  tag_key, tag_value = ArgumentProcessor.get_key_and_value(args[0])
 
-  target_playbook = os.getcwd() + '/' + PLAYBOOK_PATH_DICTIONARY['deregister']
+  extra_vars = dict()
+  extra_vars["tag_key"] = tag_key
+  extra_vars["tag_value"] = tag_value
+  extra_vars["target_group_name"] = args[1]
 
-  command = "%s %s -e \"tag_key=%s tag_value=%s target_group_name=%s\"" % (ASB_PLAY_BIN, target_playbook, tag_key, tag_value, target_group_name)
+  command = ArgumentProcessor.generate_command('deregister', extra_vars)
 
   ret_val = os.system(command)
 
@@ -135,27 +126,23 @@ def deregister_from_load_balancer(args):
 
 def upload_to_hosts(args):
   if len(args) < 3:
-    print("Error: missing parameters")
-    print("Parameter list: [tag:value] [src file path(local)] [dest. file path(remote)]")
-    return -ECODE_MISSING_PARAM
+    return error_missing_parameter(
+      ["tag:value", 
+      "src file path(local)", 
+      "dest. file path(remote)"]
+      )
 
-  tag_key = args[0].split(':')[0]
-  tag_value = args[0].split(':')[1]
-  source_file = args[1]
-  dest_path = args[2]
+  extra_vars = dict()
+  extra_vars["target_host"] = ArgumentProcessor.get_host_group_name(args[0])
+  extra_vars["src_file"] = args[1]
+  extra_vars["dest_path"] = args[2]
 
-  target_host_group = "_%s_%s" % (tag_key, tag_value)
+  print("Upload file(s) to hosts: %s" % extra_vars["target_host"])
+  print("Source file: %s" % extra_vars["src_file"])
+  print("Destination path: %s" % extra_vars["dest_path"])
 
-  print("Upload file(s) to hosts: %s" % target_host_group)
-  print("Source file: %s" % source_file)
-  print("Destination path: %s" % dest_path)
+  command = ArgumentProcessor.generate_command('upload', extra_vars)
 
-  target_playbook = os.getcwd() + '/' + PLAYBOOK_PATH_DICTIONARY['upload']
-  extra_parameters = "target_host=%s src_file=%s dest_path=%s" % (target_host_group, source_file, dest_path)
-
-  command = "%s %s -e \"%s\"" % (ASB_PLAY_BIN, target_playbook, extra_parameters)
-
-  #print(command)
   ret_val = os.system(command)
 
   return -ret_val
